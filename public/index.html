@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickLunch — BBS College of Engineering &amp; Technology</title>
+  <link rel="icon" type="image/png" href="/images/college-logo.png" />
+  <link rel="stylesheet" href="/styles.css?v=9" />
+</head>
+<body>
+  <header id="topbar" class="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        <img src="/images/college-logo.png" alt="BBS College of Engineering &amp; Technology Logo" />
+      </div>
+      <div class="brand-text">
+        <div class="brand-name">QuickLunch</div>
+        <div class="brand-college">BBS College of Engineering &amp; Technology</div>
+      </div>
+    </div>
+
+    <nav class="nav-tabs" aria-label="Views">
+      <button class="nav-tab" data-view="student">Student</button>
+      <button class="nav-tab" data-view="vendor">Vendor</button>
+      <button class="nav-tab" data-view="board">TV Board</button>
+      <button class="nav-tab" data-view="demo">Split Demo</button>
+    </nav>
+
+    <div class="topbar-status">
+      <span id="sync-indicator" class="sync-dot online">Live</span>
+      <button id="sound-toggle" class="btn btn-ghost btn-sm" title="Toggle chime">🔔</button>
+    </div>
+  </header>
+
+  <main id="app-root">
+    <!-- STUDENT VIEW (Two-Column Marketplace Layout) -->
+    <section id="view-student" class="view-section hidden">
+      <div class="hero-strip">
+        <div class="hero-left">
+          <div class="hero-kicker">CAMPUS CANTEEN EXPRESS</div>
+          <h1 class="hero-heading">Skip the Queue, <span>Grab &amp; Go.</span></h1>
+          <div class="hero-pills">
+            <span class="hero-pill">⚡ Counter A: <strong id="hero-express-wait">1m</strong></span>
+            <span class="hero-pill">🍳 Counter B: <strong id="hero-fresh-wait">5m</strong></span>
+            <span class="hero-pill">✅ <strong id="hero-served-count">42</strong> Served</span>
+          </div>
+        </div>
+        <div id="crowd-banner" class="crowd-ring green">
+          <div class="crowd-ring-num" id="crowd-count">0</div>
+          <div class="crowd-ring-meta">
+            <strong id="crowd-title">Low Crowd</strong>
+            <span id="crowd-meta">~3 min wait</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="student-layout">
+        <!-- LEFT: ACTIVE TOKEN + SEARCH/FILTERS + FOOD GRID -->
+        <div class="student-main">
+
+          <!-- Active Digital Token Card -->
+          <div id="my-tokens-section" class="card hidden">
+            <div class="card-header">
+              <h2>My Token</h2>
+            </div>
+            <div id="my-tokens-list" class="token-cards"></div>
+          </div>
+
+          <!-- Search & Filter Bar -->
+          <div class="card filter-card">
+            <div class="filter-top-row">
+              <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input id="menu-search" type="search" placeholder="Search dishes or categories..." />
+              </div>
+              <div class="segmented-box">
+                <button class="filter-pill active" data-lane="all">All</button>
+                <button class="filter-pill" data-lane="express">⚡ Express</button>
+                <button class="filter-pill" data-lane="fresh">🍳 Fresh</button>
+              </div>
+            </div>
+            <div class="category-row">
+              <button class="cat-pill active" data-cat="All">All Items</button>
+              <button class="cat-pill" data-cat="Snacks">Snacks</button>
+              <button class="cat-pill" data-cat="Beverages">Beverages</button>
+              <button class="cat-pill" data-cat="Fresh Cooked">Fresh Cooked</button>
+              <button class="cat-pill" data-cat="Combos">Combos</button>
+            </div>
+          </div>
+
+          <!-- Quick Combos Strip (visible in All / Combos) -->
+          <div id="combos-wrap" class="combos-strip"></div>
+
+          <!-- 2-Column Dish Cards -->
+          <div id="menu-grid" class="dish-grid"></div>
+        </div>
+
+        <!-- RIGHT: STICKY ORDER CART PANEL -->
+        <aside id="cart-panel" class="card cart-sidebar">
+          <div class="cart-head">
+            <div class="cart-head-title">
+              <span>🛍️</span>
+              <h2>Your Order Cart</h2>
+            </div>
+            <button id="clear-cart-btn" class="link-btn">Clear</button>
+          </div>
+
+          <div id="cart-items" class="cart-items"></div>
+
+          <div class="cart-section">
+            <div class="cart-label">Pickup Mode</div>
+            <div class="mode-pills">
+              <button type="button" class="mode-pill active" data-mode="now">⚡ Pickup Now</button>
+              <button type="button" class="mode-pill" data-mode="preorder">⏰ Pre-Order</button>
+            </div>
+            <select id="pickup-slot" class="hidden" aria-label="Pickup Slot"></select>
+          </div>
+
+          <div class="cart-section">
+            <input id="customer-name" type="text" maxlength="30" placeholder="Your name (optional)" />
+          </div>
+
+          <div class="cart-summary-box">
+            <div class="summary-row muted">
+              <span>Item Subtotal</span>
+              <span id="cart-subtotal">₹0</span>
+            </div>
+            <div id="cart-discount-row" class="summary-row discount hidden">
+              <span>Combo Savings</span>
+              <span id="cart-discount">−₹0</span>
+            </div>
+            <div class="summary-row muted">
+              <span>Pickup Counter</span>
+              <span id="cart-lane-badge" class="lane-badge express">⚡ Counter A</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-row total-row">
+              <span>Grand Total</span>
+              <span id="cart-total">₹0</span>
+            </div>
+          </div>
+
+          <div class="cart-section">
+            <div class="cart-label">PAYMENT OPTION</div>
+            <select id="payment-mode" aria-label="Payment Mode">
+              <option value="UPI / Instant">⚡ Pay Now via UPI</option>
+              <option value="Cash at Counter">💵 Cash at Counter</option>
+            </select>
+          </div>
+
+          <button id="place-order-btn" class="btn-checkout" disabled>Get Token →</button>
+        </aside>
+      </div>
+
+      <!-- Mobile Sticky Cart Bar -->
+      <div id="mobile-cart-bar" class="mobile-cart-bar hidden">
+        <div id="mobile-cart-summary" class="mobile-cart-summary">0 items • ₹0</div>
+        <button id="mobile-cart-jump" type="button" class="btn-mobile-jump">View Cart →</button>
+      </div>
+    </section>
+
+    <!-- VENDOR VIEW -->
+    <section id="view-vendor" class="view-section hidden">
+      <div id="vendor-auth-gate" class="vendor-auth-wrap">
+        <div class="card vendor-auth-card">
+          <div class="vendor-auth-head">
+            <img class="vendor-auth-logo" src="/images/college-logo.png" alt="BBS College of Engineering &amp; Technology Logo" />
+            <div>
+              <h2>Vendor Counter Login</h2>
+              <p class="small muted">Authorized canteen staff &amp; demo examiners only. Students cannot access counter controls.</p>
+            </div>
+          </div>
+
+          <form id="vendor-login-form" class="auth-form" autocomplete="off">
+            <div>
+              <label class="cart-label" for="vendor-login-user">Vendor Username</label>
+              <input id="vendor-login-user" type="text" required placeholder="Enter vendor username" />
+            </div>
+            <div>
+              <label class="cart-label" for="vendor-login-pass">Password</label>
+              <input id="vendor-login-pass" type="password" required placeholder="Enter vendor password" />
+            </div>
+            <div id="vendor-login-error" class="auth-error hidden"></div>
+            <button id="vendor-login-btn" type="submit" class="btn btn-primary vendor-action-btn">Sign In to Counter</button>
+            <div class="auth-divider"><span>For Examiner / Quick Preview</span></div>
+            <button id="vendor-demo-login-btn" type="button" class="btn btn-demo-outline vendor-action-btn">Sign in as Demo</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="vendor-dashboard" class="vendor-shell hidden">
+        <div class="vendor-toolbar card">
+          <div class="vendor-title-group">
+            <h2>Orders (<span id="vendor-active-count">0</span>)</h2>
+            <span id="vendor-identity-badge" class="badge-pill">Canteen Vendor</span>
+          </div>
+          <div class="toolbar-buttons">
+            <button id="walkin-express-btn" class="btn btn-success btn-sm">+ Walk-in ⚡</button>
+            <button id="walkin-fresh-btn" class="btn btn-info btn-sm">+ Walk-in 🍳</button>
+            <button id="simulate-rush-btn" class="btn btn-warning btn-sm">Rush</button>
+            <button id="reset-demo-btn" class="btn btn-ghost btn-sm">Reset</button>
+            <button id="vendor-logout-btn" class="btn btn-outline-danger btn-sm">Logout</button>
+          </div>
+        </div>
+
+        <div class="vendor-grid">
+          <div class="card">
+            <div id="vendor-orders-list" class="vendor-orders-list"></div>
+          </div>
+
+          <div class="vendor-side">
+            <div class="card">
+              <div class="card-header">
+                <h2>Stock</h2>
+              </div>
+              <div id="vendor-stock-list" class="vendor-stock-list"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h2>Peak Hours</h2>
+                <span id="served-today-badge" class="badge-pill">0 Served</span>
+              </div>
+              <div id="peak-chart" class="peak-chart"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COUNTER TV BOARD VIEW -->
+    <section id="view-board" class="view-section hidden">
+      <div class="board-shell">
+        <div class="board-header">
+          <div>
+            <div class="board-title">QuickLunch</div>
+            <div id="board-crowd-line" class="board-sub">Live Queue</div>
+          </div>
+          <div class="board-clock-wrap">
+            <div id="board-clock" class="board-clock">--:--</div>
+            <div class="board-qr-mini">
+              <div id="board-qr-slot"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="board-columns">
+          <div class="board-col serving">
+            <div class="board-col-head">READY</div>
+            <div id="board-ready-list" class="board-tokens"></div>
+          </div>
+          <div class="board-col preparing">
+            <div class="board-col-head">PREPARING</div>
+            <div id="board-prep-list" class="board-tokens"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPLIT DEMO VIEW -->
+    <section id="view-demo" class="view-section hidden">
+      <div class="demo-banner">
+        <strong>Live Demo</strong>
+        <div class="demo-banner-actions">
+          <button id="demo-rush-btn" class="btn btn-warning btn-sm">Rush</button>
+          <button id="demo-reset-btn" class="btn btn-ghost btn-sm">Reset</button>
+        </div>
+      </div>
+      <div class="split-grid">
+        <div class="split-pane phone-pane">
+          <div class="pane-label">Student</div>
+          <iframe src="/?view=student&embed=1" title="Student"></iframe>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label">Vendor</div>
+          <iframe src="/?view=vendor&embed=1" title="Vendor"></iframe>
+        </div>
+        <div class="split-pane">
+          <div class="pane-label">TV Board</div>
+          <iframe src="/?view=board&embed=1" title="TV Board"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- QR STANDEE VIEW -->
+    <section id="view-qr" class="view-section hidden">
+      <div class="qr-shell">
+        <div class="card qr-controls no-print">
+          <div class="qr-url-row">
+            <select id="lan-url-select" aria-label="URL"></select>
+            <input id="custom-qr-url" type="text" placeholder="Custom URL (e.g. https://...vercel.app)" />
+            <button id="print-qr-btn" class="btn btn-primary btn-sm">Print</button>
+          </div>
+        </div>
+
+        <div class="standee-card">
+          <div class="standee-logo">
+            <img src="/images/college-logo.png" alt="BBS College of Engineering &amp; Technology Logo" />
+          </div>
+          <h1>QuickLunch</h1>
+          <p class="standee-college">BBS College of Engineering &amp; Technology</p>
+          <div id="standee-qr-box" class="standee-qr-box"></div>
+          <div id="standee-url-text" class="standee-url">http://localhost:3000</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/qr.js?v=9"></script>
+  <script src="/app.js?v=9"></script>
+</body>
+</html>

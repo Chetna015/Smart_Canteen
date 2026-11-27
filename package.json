@@ -1,0 +1,21 @@
+{
+  "name": "smart-canteen-prototype",
+  "version": "1.0.0",
+  "description": "QuickBite - Smart Canteen Queue & Token Management System (AID151 Innovation & Design Thinking Lab Prototype)",
+  "main": "server.js",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "design-thinking",
+    "smart-canteen",
+    "queue-management",
+    "aid151",
+    "supabase",
+    "vercel"
+  ],
+  "license": "MIT"
+}
