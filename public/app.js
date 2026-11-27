@@ -6,6 +6,28 @@
   const isEmbed = params.get('embed') === '1';
 
   const MY_ORDERS_STORAGE_KEY = 'ql_my_orders';
+  const LAST_SNAPSHOT_KEY = 'ql_last_snapshot';
+
+  function loadCachedSnapshot() {
+    try {
+      const raw = localStorage.getItem(LAST_SNAPSHOT_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && Array.isArray(parsed.menu) && Array.isArray(parsed.orders)) {
+        return parsed;
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return null;
+  }
+
+  function saveCachedSnapshot(snapshot) {
+    try {
+      localStorage.setItem(LAST_SNAPSHOT_KEY, JSON.stringify(snapshot));
+    } catch {
+      // ignore storage errors
+    }
+  }
 
   function loadStoredOrders() {
     try {
@@ -29,6 +51,7 @@
   }
 
   const initialPinMap = loadStoredOrders();
+  const initialSnapshot = loadCachedSnapshot();
 
   const appState = {
     view: ['student', 'vendor', 'board', 'demo', 'qr'].includes(initialView) ? initialView : 'student',
@@ -39,7 +62,7 @@
     cart: {}, // itemId -> qty
     comboDiscount: 0,
     soundEnabled: true,
-    snapshot: null,
+    snapshot: initialSnapshot,
     myOrderIds: Object.keys(initialPinMap),
     myOrderPins: initialPinMap,
     vendorPins: {},
@@ -88,7 +111,7 @@
 
   async function apiRequest(url, options = {}) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+    const timer = setTimeout(() => controller.abort(), 12000);
     try {
       const res = await fetch(url, {
         credentials: 'same-origin',
@@ -242,7 +265,7 @@
             return `
               <article class="dish-card ${item.inStock ? '' : 'sold-out'}" data-dish-id="${item.id}">
                 <div class="dish-media">
-                  <img src="${item.image || `/images/${item.id}.jpg`}" alt="${item.name}" />
+                  <img src="${item.image || `/images/${item.id}.jpg`}" alt="${item.name}" loading="lazy" decoding="async" />
                   <span class="dish-pill-left">${pillText}</span>
                   <span class="dish-pill-right">🕒 ${item.prepMins}m • ${counterText}</span>
                 </div>
@@ -608,6 +631,7 @@
     appState.prevReadyIds = readyNow;
     appState.initializedReadySet = true;
     appState.snapshot = snapshot;
+    saveCachedSnapshot(snapshot);
     renderAll();
   }
 
@@ -616,16 +640,20 @@
     let inFlight = false;
     let shownError = false;
     const poll = async () => {
-      if (inFlight) return;
+      if (inFlight || document.hidden) return;
       inFlight = true;
       try {
         const snap = await apiRequest('/api/state');
         indicator.textContent = snap.storage === 'supabase' ? 'Live DB' : 'Live';
+        indicator.title = snap.storage === 'supabase'
+          ? 'Connected to Supabase Cloud DB'
+          : 'Connected to local server (fast in-memory store)';
         indicator.classList.remove('offline');
         shownError = false;
         handleSnapshot(snap);
       } catch (err) {
         indicator.textContent = 'Offline';
+        indicator.title = 'Server unreachable or request timed out — retrying automatically';
         indicator.classList.add('offline');
         if (!shownError) {
           shownError = true;
@@ -636,7 +664,16 @@
       }
     };
     poll();
-    setInterval(poll, 1000);
+    setInterval(() => {
+      if (appState.view !== 'demo') {
+        poll();
+      }
+    }, 2500);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && appState.view !== 'demo') {
+        poll();
+      }
+    });
   }
 
   function bindEvents() {
@@ -999,7 +1036,6 @@
   }
 
   bindEvents();
-  checkVendorSession();
   setView(appState.view);
   connectLiveSync();
 })();
